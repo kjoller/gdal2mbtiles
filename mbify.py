@@ -6,17 +6,39 @@
 
 
 import sqlite3, os
+from optparse import OptionParser # optparse-modulet bruges til at tage imod
+                                  # parametre fra kommandolinjen
 
-datafolder = 'test'
-format = 'png'
-metadata={'name': 'MbifyTest',
-          'type' : 'baselayer',
-          'version' : '0.1',
-          'description' : 'Test tileset from mbify.py',
-          'format' : format,
-          'bounds' : '12.50861,55.655,12.604289,55.704289' }
+# OptParse set-up
+parser = OptionParser(usage="usage: %prog [options] directory output")
+parser.add_option("-V", "--version", dest="version", default="1.0", help="Version of dataset")
+parser.add_option("-f", "--format", dest="format", default="png", help="Format of dataset (png, jpg)")
+parser.add_option("-n", "--name", dest="name", default="", help="Name of dataset")
+parser.add_option("-d", "--description", dest="description", default="", help="Description of dataset")
+parser.add_option("-b", "--bounds", dest="bounds", default="-180.0,-85,180,85", help="Bounds of dataset in WGS84")
+parser.add_option("-a", "--attribution", dest="attribution", default="", help="Attribution string of dataset")
 
-conn = sqlite3.connect('test.mbtiles')
+(options, args) = parser.parse_args()
+
+if not args:
+    parser.error("No variables specified")
+
+if len(args)<2:
+    parser.error("Not enough arguments")
+
+datafolder = args[0]
+format = options.format
+if not options.name:
+    options.name = args[1]
+metadata={'name': options.name,
+          'type' : 'baselayer', # TODO: Handle different kinds of layers
+          'version' : options.version,
+          'description' : options.description,
+          'format' : options.format,
+          'bounds' : options.bounds,
+          'attribution': options.attribution }
+
+conn = sqlite3.connect(args[1])
 try:
    conn.execute('DROP TABLE metadata')
 except:
